@@ -6,7 +6,7 @@
 
 import torch
 from flash_attn.flash_attn_interface import flash_attn_varlen_func
-from internvl.model.phi3.modeling_phi3 import (PHI3_ATTENTION_CLASSES,
+from libs.InternVL.internvl_chat.internvl.model.phi3.modeling_phi3 import (PHI3_ATTENTION_CLASSES,
                                                Phi3FlashAttention2)
 
 
