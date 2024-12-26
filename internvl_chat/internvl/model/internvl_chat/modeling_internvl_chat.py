@@ -117,6 +117,17 @@ class InternVLChatModel(PreTrainedModel):
         self.vision_model = get_peft_model(self.vision_model, lora_config)
         self.vision_model.print_trainable_parameters()
 
+    def wrap_backbone_lora_params(self):
+        target_modules = ['attn.qkv', 'attn.proj', 'mlp.fc1', 'mlp.fc2']
+        
+        return_modules = []
+        for name, param in self.named_modules():
+            for _module in target_modules:
+                if _module in name and 'vision_model' in name:
+                    return_modules.append(name)
+                    break
+        return return_modules
+
     def wrap_llm_lora(self, r=128, lora_alpha=256, lora_dropout=0.05):
         # Determine the target modules based on the architecture of the language model
         if self.llm_arch_name == 'InternLM2ForCausalLM':
@@ -139,12 +150,33 @@ class InternVLChatModel(PreTrainedModel):
         self.language_model.enable_input_require_grads()
         self.language_model.print_trainable_parameters()
 
+    def wrap_llm_lora_params(self):
+        # Determine the target modules based on the architecture of the language model
+        if self.llm_arch_name == 'InternLM2ForCausalLM':
+            target_modules = ['attention.wqkv', 'attention.wo', 'feed_forward.w1', 'feed_forward.w2', 'feed_forward.w3']
+        elif self.llm_arch_name == 'Phi3ForCausalLM':
+            target_modules = ['mlp.down_proj', 'mlp.gate_up_proj', 'self_attn.o_proj', 'self_attn.qkv_proj']
+        elif self.llm_arch_name in ['Qwen2ForCausalLM', 'LlamaForCausalLM']:
+            target_modules = ['self_attn.q_proj', 'self_attn.k_proj', 'self_attn.v_proj', 'self_attn.o_proj',
+                              'mlp.gate_proj', 'mlp.down_proj', 'mlp.up_proj']
+        else:
+            raise NotImplemented
+        
+        return_modules = []
+        for name, param in self.named_modules():
+            for _module in target_modules:
+                if _module in name and 'language_model' in name:
+                    return_modules.append(name)
+                    break
+        return return_modules
+
     def forward(
             self,
             pixel_values: torch.FloatTensor,
             input_ids: torch.LongTensor = None,
             attention_mask: Optional[torch.Tensor] = None,
             position_ids: Optional[torch.LongTensor] = None,
+            inputs_embeds: Optional[torch.LongTensor] = None,
             image_flags: Optional[torch.LongTensor] = None,
             past_key_values: Optional[List[torch.FloatTensor]] = None,
             labels: Optional[torch.LongTensor] = None,
