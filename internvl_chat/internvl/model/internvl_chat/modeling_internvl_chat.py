@@ -61,7 +61,8 @@ class InternVLChatModel(PreTrainedModel):
         # Enable Flash Attention if supported, otherwise fall back to eager attention.
         use_flash_attn = use_flash_attn if has_flash_attn else False
         config.vision_config.use_flash_attn = True if use_flash_attn else False
-        config.llm_config.attn_implementation = 'flash_attention_2' if use_flash_attn else 'eager'
+        # config.llm_config.attn_implementation = 'flash_attention_2' if use_flash_attn else 'eager'
+        config.llm_config.attn_implementation = 'eager'
 
         logger.info(f'num_image_token: {self.num_image_token}')
         logger.info(f'ps_version: {self.ps_version}')
@@ -80,8 +81,7 @@ class InternVLChatModel(PreTrainedModel):
                 self.language_model = Phi3ForCausalLM(config.llm_config)
             elif config.llm_config.architectures[0] == 'Qwen2ForCausalLM':
                 self.language_model = Qwen2ForCausalLM(
-                    config.llm_config,
-                    attn_implementation='eager')
+                    config.llm_config)
             else:
                 raise NotImplementedError(f'{config.llm_config.architectures[0]} is not implemented.')
 
