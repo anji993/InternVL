@@ -81,7 +81,7 @@ class InternVLChatModel(PreTrainedModel):
             elif config.llm_config.architectures[0] == 'Qwen2ForCausalLM':
                 self.language_model = Qwen2ForCausalLM(
                     config.llm_config,
-                    attn_implementation=False)
+                    attn_implementation='eager')
             else:
                 raise NotImplementedError(f'{config.llm_config.architectures[0]} is not implemented.')
 
